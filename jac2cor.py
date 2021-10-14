@@ -28,15 +28,15 @@ def F_get_corners_from_rectangle(center_x, center_y, angle, rect_width, rect_hei
 """
 Extract properties from single lines of Jacquard grasp files.
 *_grasps.txt:
- a text file with the grasps annotations. Each line in the file is one grasp written as x;y;theta in degrees;opening;jaws size. 
+ a text file with the grasps annotations. Each line in the file is one grasp written as x;y;theta in degrees;opening;jaws size.
  Please note that all values are in image coordinates, so they are expressed in pixels, y is toward the bottom of the image (and therefore the angle is
-  horizontally mirrored). When the position is the same on multiple consecutive rows, the first one corresponds to the grasp with the default jaws size of 
+  horizontally mirrored). When the position is the same on multiple consecutive rows, the first one corresponds to the grasp with the default jaws size of
   2 cm and the followings are just repetition of this grasp with different sizes.
 """
 def F_extract_file(path_to_grasp_file):
     with open(path_to_grasp_file,'r') as file:
         lines = file.readlines()
-    
+
     rectangle_corners = []
     # interate lines
     for line in lines:
@@ -92,12 +92,12 @@ def run(source_path, target_path):
                 #cut 80 pixels top and bottom from center
                 cut_rgb = rgb_resized[ 80:560, 0:640]
                 cut_depth = depth_resized.crop((0, 80, 640, 560))
-                
+
                 #write dat shit
                 cv2.imwrite(os.path.join(target_path, "{}{}{}".format("pcd", str(counter).zfill(5), "r.png")), cut_rgb)
                 cut_depth.save(os.path.join(target_path, "{}{}{}".format("pcd", str(counter).zfill(5), "d.tiff")))
-                
-                F_write_to_cornell_grasps(target_path + "cpos" + str(counter).zfill(5) + ".txt", 
+
+                F_write_to_cornell_grasps(target_path + "pcd" + str(counter).zfill(5) + "cpos.txt", 
                                             F_extract_file(os.path.join(root, filename)))
                 counter += 1
 
@@ -115,6 +115,6 @@ if __name__ == "__main__":
     if(os.path.exists(args.t) and os.path.isdir(args.t)):
         source_p = args.s
         target_p = args.t
-   
+
     # run dat shit
     run(source_p, target_p)
