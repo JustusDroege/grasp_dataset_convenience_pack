@@ -4,6 +4,7 @@ import math
 import cv2
 import argparse
 
+SCALE_FACTOR = 640.0/1024
 
 """
 Ultimately returns 4 coordinates (x,y) of a rectangle computed from its center, angle and width/height.
@@ -23,7 +24,7 @@ def F_get_corners_from_rectangle(center_x, center_y, angle, rect_width, rect_hei
     bottom_left_x = center_x - ((rect_width / 2) * math.cos(angle)) + ((rect_height / 2) * math.sin(angle))
     bottom_left_y = center_y - ((rect_width / 2) * math.sin(angle)) - ((rect_height / 2) * math.cos(angle))
 
-    return [(top_left_x, top_left_y), (top_right_x, top_right_y), (bottom_right_x, bottom_right_y), (bottom_left_x, bottom_left_y)]
+    return [ (top_right_x, top_right_y), (top_left_x, top_left_y), (bottom_left_x, bottom_left_y),(bottom_right_x, bottom_right_y)]
 
 """
 Extract properties from single lines of Jacquard grasp files.
@@ -43,11 +44,11 @@ def F_extract_file(path_to_grasp_file):
         split = line.split(';')
 
         #extract properties only for readability
-        new_x_center = float(split[0]) * 640/1024
-        new_y_center = float(split[1]) * 640/1024 - 80
+        new_x_center = float(split[0]) * SCALE_FACTOR
+        new_y_center = float(split[1]) * SCALE_FACTOR - 80
         theta = float(split[2])
-        gripper_opening = float(split[3])
-        gripper_jaws = float(split[4])
+        gripper_opening = float(split[3]) * SCALE_FACTOR
+        gripper_jaws = float(split[4]) * SCALE_FACTOR
         rectangle_corners.append(F_get_corners_from_rectangle(new_x_center, new_y_center, theta, gripper_opening, gripper_jaws))
     #print(rectangle_corners)
     return rectangle_corners
