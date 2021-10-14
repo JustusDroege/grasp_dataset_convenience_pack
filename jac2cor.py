@@ -43,8 +43,8 @@ def F_extract_file(path_to_grasp_file):
         split = line.split(';')
 
         #extract properties only for readability
-        new_x_center = float(split[0])
-        new_y_center = float(split[1]) - 80
+        new_x_center = float(split[0]) * 640/1024
+        new_y_center = float(split[1]) * 640/1024 - 80
         theta = float(split[2])
         gripper_opening = float(split[3])
         gripper_jaws = float(split[4])
@@ -97,7 +97,7 @@ def run(source_path, target_path):
                 cv2.imwrite(os.path.join(target_path, "{}{}{}".format("pcd", str(counter).zfill(5), "r.png")), cut_rgb)
                 cut_depth.save(os.path.join(target_path, "{}{}{}".format("pcd", str(counter).zfill(5), "d.tiff")))
 
-                F_write_to_cornell_grasps(target_path + "pcd" + str(counter).zfill(5) + "cpos.txt", 
+                F_write_to_cornell_grasps(target_path + "pcd" + str(counter).zfill(5) + "cpos.txt",
                                             F_extract_file(os.path.join(root, filename)))
                 counter += 1
 
