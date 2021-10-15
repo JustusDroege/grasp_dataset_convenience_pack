@@ -1,2 +1,4 @@
-opencv_python==4.5.3.56
+jupyter==1.0.0
+matplotlib==3.4.3
+opencv-python==4.5.3.56
 Pillow==8.3.2

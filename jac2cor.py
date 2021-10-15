@@ -3,28 +3,45 @@ import os
 import math
 import cv2
 import argparse
+import numpy as np
 
 SCALE_FACTOR = 640.0/1024
+
+def visualize_grasps(img_original, grasps, window_name):
+    img = img_original.copy()
+    for grasp in grasps:
+        coord0 = grasp[0]
+        coord1 = grasp[1]
+        coord2 = grasp[2]
+        coord3 = grasp[3]
+        # attention BGR in OpenCV
+        cv2.line(img, (int(coord0[0]), int(coord0[1])), (int(coord1[0]), int(coord1[1])), (10, 200, 10), 1)
+        cv2.line(img, (int(coord1[0]), int(coord1[1])), (int(coord2[0]), int(coord2[1])), (200, 15, 0), 1)
+        cv2.line(img, (int(coord2[0]), int(coord2[1])), (int(coord3[0]), int(coord3[1])), (10, 200, 10), 1)
+        cv2.line(img, (int(coord3[0]), int(coord3[1])), (int(coord0[0]), int(coord0[1])), (200, 15, 0), 1)
+        cv2.circle(img, (int(coord0[0]), int(coord0[1])), 2, (15, 15, 255), 2)  # red
+        cv2.circle(img, (int(coord1[0]), int(coord1[1])), 2, (15, 255, 0), 2)  # green
+        cv2.circle(img, (int(coord2[0]), int(coord2[1])), 2, (250, 250, 250), 2)  # white
+        cv2.circle(img, (int(coord3[0]), int(coord3[1])), 2, (150, 150, 150), 2)  # gray
+    cv2.imshow(window_name, img)
+
 
 """
 Ultimately returns 4 coordinates (x,y) of a rectangle computed from its center, angle and width/height.
 Order: Top left, top right, bottom right, bottom left.
 """
 def F_get_corners_from_rectangle(center_x, center_y, angle, rect_width, rect_height):
-    top_left_x = center_x - ((rect_width / 2) * math.cos(angle)) - ((rect_height / 2) * math.sin(angle))
-    top_left_y = center_y - ((rect_width / 2) * math.sin(angle)) + ((rect_height / 2) * math.cos(angle))
-
-    top_right_x = center_x + ((rect_width / 2) * math.cos(angle)) - ((rect_height / 2) * math.sin(angle))
-    top_right_y = center_y + ((rect_width / 2) * math.sin(angle)) + ((rect_height / 2) * math.cos(angle))
-
-
-    bottom_right_x = center_x + ((rect_width / 2) * math.cos(angle)) + ((rect_height / 2) * math.sin(angle))
-    bottom_right_y = center_y + ((rect_width / 2) * math.sin(angle)) - ((rect_height / 2) * math.cos(angle))
-
-    bottom_left_x = center_x - ((rect_width / 2) * math.cos(angle)) + ((rect_height / 2) * math.sin(angle))
-    bottom_left_y = center_y - ((rect_width / 2) * math.sin(angle)) - ((rect_height / 2) * math.cos(angle))
-
-    return [ (top_right_x, top_right_y), (top_left_x, top_left_y), (bottom_left_x, bottom_left_y),(bottom_right_x, bottom_right_y)]
+    corners = np.array([[-rect_width / 2, -rect_height / 2],
+                        [rect_width / 2, -rect_height / 2],
+                        [rect_width / 2, rect_height / 2],
+                        [-rect_width / 2, rect_height / 2]], dtype=np.float)
+    center = np.array([center_x, center_y], dtype=np.float)
+    angle_in_rad = angle * np.pi / 180.0
+    r_z = np.array([[np.cos(angle_in_rad), -np.sin(angle_in_rad)],
+                    [np.sin(angle_in_rad), np.cos(angle_in_rad)]])
+    rotated_corners = corners @ r_z.T
+    rotated_corners += center
+    return rotated_corners
 
 """
 Extract properties from single lines of Jacquard grasp files.
@@ -34,7 +51,7 @@ Extract properties from single lines of Jacquard grasp files.
   horizontally mirrored). When the position is the same on multiple consecutive rows, the first one corresponds to the grasp with the default jaws size of
   2 cm and the followings are just repetition of this grasp with different sizes.
 """
-def F_extract_file(path_to_grasp_file):
+def F_extract_file(path_to_grasp_file, callback):
     with open(path_to_grasp_file,'r') as file:
         lines = file.readlines()
 
@@ -49,7 +66,7 @@ def F_extract_file(path_to_grasp_file):
         theta = float(split[2])
         gripper_opening = float(split[3]) * SCALE_FACTOR
         gripper_jaws = float(split[4]) * SCALE_FACTOR
-        rectangle_corners.append(F_get_corners_from_rectangle(new_x_center, new_y_center, theta, gripper_opening, gripper_jaws))
+        rectangle_corners.append(callback(new_x_center, new_y_center, theta, gripper_opening, gripper_jaws))
     #print(rectangle_corners)
     return rectangle_corners
 
@@ -97,9 +114,12 @@ def run(source_path, target_path):
                 #write dat shit
                 cv2.imwrite(os.path.join(target_path, "{}{}{}".format("pcd", str(counter).zfill(5), "r.png")), cut_rgb)
                 cut_depth.save(os.path.join(target_path, "{}{}{}".format("pcd", str(counter).zfill(5), "d.tiff")))
+                grasps = F_extract_file(os.path.join(root, filename), callback=F_get_corners_from_rectangle)
+                F_write_to_cornell_grasps(target_path + "pcd" + str(counter).zfill(5) + "cpos.txt", grasps)
 
-                F_write_to_cornell_grasps(target_path + "pcd" + str(counter).zfill(5) + "cpos.txt",
-                                            F_extract_file(os.path.join(root, filename)))
+                # Visualize
+                #visualize_grasps(cut_rgb, grasps, window_name='Grasps')
+                #cv2.waitKey(0)
                 counter += 1
 
 def F_parse():
