@@ -20,6 +20,7 @@ if __name__ == '__main__':
         prefix = file[:8]
         if prefix not in prefixes:
             prefixes.append(prefix)
+    prefixes.sort()
 
     dir_counter = 0
     for i, prefix in enumerate(prefixes):
