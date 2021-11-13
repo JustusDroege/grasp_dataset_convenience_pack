@@ -1,11 +1,6 @@
 import os
-import Datafolder
-import Dataset
-from enum import Enum
-
-class Option(Enum):
-    RANDOM = 0
-    SPECIFIC = 1
+from Datafolder import DataFolder
+import enums
 
 class Dataset:
     def __init__(self, location) -> None:
@@ -15,38 +10,39 @@ class Dataset:
         self.path_to_main_folder = location
         
         # get tree info
-        self.subfolders = self.GetSubfolders()
+        self.subfolders = self.get_subfolders()
 
-    def GetSubfolders(self) -> list:
-        """Get subfolders of the dataset.
-
+    def get_subfolders(self) -> list:
+        """
+        Get subfolders of the dataset.
         Returns list with root path strings for each subfolder in the dataset.
         """
         data_folders = []
         for folder in os.listdir(self.path_to_main_folder):
-            data_folders.append(Datafolder.Datafolder(os.path.join(self.path_to_main_folder, folder)))
+            print(f"Loading data at {os.path.join(self.path_to_main_folder, folder)}")
+            data_folders.append(DataFolder(os.path.join(self.path_to_main_folder, folder)))
         return data_folders
 
-    def PrintInfo(self) -> None:
-        """Prints info about the instance.
+    def print_folder_info(self) -> None:
+        """
+        Prints info about the instance.
         """
         print(f"##### Info #####")
         print(f"Location: {self.path_to_main_folder}")
         print(f"Distributed in {len(self.subfolders)} subfolders:")
         [print(f"{f.location}\n") for f in self.subfolders]
 
-    @staticmethod
-    def Merge(data1 : Dataset) -> Dataset:
-        return Dataset("")
-
-    def Visualize(cls):
-        print("visualize")
+    def save_samples(save_option : enums.save_option, grasp_option : enums.visiualization_option, save_location :str):
+        """
+        Iterates through the subfolders and saves images to save_location:
+        RANDOM: Randomly selects images to save.
+        SPECIFIC: Saves specific image numbers.
+        """
+        if(save_option == enums.save_option.RANDOM):
+            pass
+        elif(save_option == enums.save_option.SPECIFIC):
+            pass
         pass
 
-    def SaveOutput(Option : Option):
-        pass
 
-
-if __name__ == '__main__':
-    data = Dataset("path")
             

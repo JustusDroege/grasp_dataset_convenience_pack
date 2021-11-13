@@ -1,38 +1,40 @@
 import os
-import DataInfo
-import DataPoint
+from DataInfo import DataInfo
+from DataPoint import DataPoint
 
 """
 Datafolder class. Expected arg is a normpath : str
 """
-class Datafolder:
+class DataFolder:
     def __init__(self, location) -> None:
         self.location = location
 
         #get files, full paths
-        self.files = self.GetFiles(self, self.location)
-        self.filenames = self.GetFilenames(self.files)
+        self.files = self.get_files(self, self.location)
+        self.filenames = self.get_filenames(self.files)
 
         # misc info about data
-        self.info = self.GetRange(self.filenames)
+        self.info = self.get_range(self.filenames)
 
         # store data points
-        m = self.GetDataPoints()
+        m = self.get_data_points()
 
         self.datapoints = m[0]
         self.incomplete = m[1]
 
+        self.avg_grasps_per_datapoint = self.compute_avg_amount_grasps_per_image()
+
     @staticmethod
-    def GetFiles(self, location : str) -> list:
+    def get_files(self, location : str) -> list:
         return [os.path.join(location, f) for f in os.listdir(location) if os.path.isfile(os.path.join(location, f))]
 
-    def GetFilenames(self, files : list) -> list:
+    def get_filenames(self, files : list) -> list:
         filenames = []
         for f in files:
             filenames.append(f.split('/')[-1])
         return filenames
 
-    def GetRange(self, filenames : list) -> DataInfo:
+    def get_range(self, filenames : list) -> DataInfo:
         d_f = c_f = g_f = False
         
         highest = 0
@@ -107,7 +109,6 @@ class Datafolder:
                         zfill = len(info[1])
                     g_f = True
                 
-
             # run that loop
             else:
                 filename = ""
@@ -125,9 +126,9 @@ class Datafolder:
                 if(int(digit) < lowest):
                     lowest = int(digit)
 
-        return DataInfo.DataInfo(lowest, highest, zfill, prefix, sd, sc, sg)
+        return DataInfo(lowest, highest, zfill, prefix, sd, sc, sg)
 
-    def GetDataPoints(self) -> list:
+    def get_data_points(self) -> list:
         data = []
         incompletes = []
         def FindCorrespondance(digit : str):
@@ -151,11 +152,17 @@ class Datafolder:
             digit = str(i).zfill(self.info.zfill)
             depth, color, grasps = FindCorrespondance(digit)
             if not depth == "" and not color == "" and not grasps == "":
-                data.append(DataPoint.DataPoint(depth, color, grasps))
+                data.append(DataPoint(depth, color, grasps))
             else:
-                incompletes.append(DataPoint.DataPoint(depth, color, grasps))
+                incompletes.append(DataPoint(depth, color, grasps))
         
         return data, incompletes
+
+    def compute_avg_amount_grasps_per_image(self):
+        total = 0
+        for i in range(len(self.datapoints)):
+            total += self.datapoints[i].amount_grasps
+        return total / len(self.datapoints)
 
 
 
