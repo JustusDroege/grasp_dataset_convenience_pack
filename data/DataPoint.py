@@ -14,7 +14,7 @@ class DataPoint:
         self.depth = depth
         self.color = color
         self.grasps = grasps
-        self.digit = int(digit)
+        self.digit = int(digit) # initially with zfill
         self.valid = (depth is not "" and color is not "" and grasps is not "")
 
         self.rectangle_corners = self.read_grasp_file(self.grasps)
@@ -41,7 +41,7 @@ class DataPoint:
 
     def save(self, location : str=None, filename : str=None,options : Options=Options()):
         location = self.normpath if location is None else location
-        filename = str(self.digit) if filename is None else filename
+        filename = f"sample_{self.digit}" if filename is None else filename
         if not (os.path.exists(location)):
             raise NotADirectoryError("Given save location is not a valid path!")
         image_operations.save(self, location, filename, options)

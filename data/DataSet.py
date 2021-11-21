@@ -1,4 +1,9 @@
 import os
+import random
+from typing import List
+from data import DataPoint
+
+from data.Options import Options
 from .DataFolder import DataFolder
 from .enums import save_option, visiualization_option
 
@@ -38,19 +43,37 @@ class Dataset:
         print(f"Distributed in {len(self.subfolders)} subfolders:")
         [print(f"{f.location}\n") for f in self.subfolders]
 
-    def save_samples(self, save_option : save_option, grasp_option : visiualization_option, save_location : str,
-                     samples_to_save : int =20, specific_to_save=[0,1,2,3,4,5]):
+    def save_samples(self, amount : int=None, indices :List=None, save_location : str=None, options : Options=Options()
+                     ):
         """
         Iterates through the subfolders and saves images to save_location:
         RANDOM: Randomly selects images to save.
         SPECIFIC: Saves specific image numbers.
         """
+        amount = options.amount if amount is None else amount
+        save_location = self.path_to_main_folder if save_location is None else save_location
         if not (os.path.exists(save_location)):
             raise NotADirectoryError("Given save location is not a valid path!")
-        if(save_option == save_option.RANDOM):
-            
-            pass
-        elif(save_option == save_option.SPECIFIC):
-            pass
-        pass
-
+        if(indices is not None):
+            for i in range(len(indices)):
+                dp_choice = self.find_datapoint(str(indices[i]).zfill(self.subfolders[0].info.zfill))
+                if(dp_choice == 0): continue
+                dp_choice.save(location=save_location, options=options)
+        elif(indices is None and amount is not None):
+            for i in range(amount):
+                f_choice = random.choice(self.subfolders)
+                dp_choice = random.choice(f_choice.datapoints)
+                dp_choice.save(location=save_location, options=options)
+    
+    """
+    O^2 algorithm quick and dirty return Datapoint to a given number.
+    """
+    def find_datapoint(self, digit : str) -> DataPoint:
+        for i in range(len(self.subfolders)):
+            tmp_sf = self.subfolders[i]
+            tmp_zfill = self.subfolders[i].info.zfill
+            for j in range(len(tmp_sf.datapoints)):  
+                test = str(tmp_sf.datapoints[j].digit).zfill(tmp_zfill)
+                if(str(tmp_sf.datapoints[j].digit).zfill(tmp_zfill) == digit):
+                    return tmp_sf.datapoints[j]
+        return 0
